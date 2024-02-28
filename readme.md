@@ -12,3 +12,11 @@ we use pylatexenc to parse the latex file.
 - [ ] Parse figure or other information 
 - [ ] extract information
 - [ ] format to internlmxcomposer training format.
+
+### Usage
+
+
+```
+cd process_code
+python process.py
+```

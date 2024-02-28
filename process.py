@@ -1,8 +1,6 @@
 import sys
-import os
-file_path = os.path.dirname(__file__)
-print(file_path)
-sys.path.append(os.path.join(file_path, "utils"))
+
+sys.path.append("/fs-computility/llm/shared/feizhaoye/code/utils/pylatexenc")
 
 import pylatexenc
 from pylatexenc.latexwalker import LatexWalker
@@ -92,7 +90,7 @@ def get_new_context_db(newcommand_list):
         'newcommand',
         prepend=True,
         macros=[
-            std_macro(new_command[0], True, int(new_command[1])) if new_command[1] is not None and new_command[1].isdigit() else macrospec.MacroSpec(new_command[0], True, 0) for new_command in newcommand_list 
+            std_macro(new_command[0], True, int(new_command[1])) if new_command[1] is not None and isdigit(new_command[1]) else macrospec.MacroSpec(new_command[0], True, 0) for new_command in newcommand_list 
         ],
         environments=[],
         specials=[],
@@ -107,9 +105,7 @@ from pylatexenc.latexnodes.nodes import *
 class Node2latex():
     def __init__(self, new_command_list) -> None:
         self.newcommand_para_dict = {i[0]: i for i in new_command_list}
-        
-        
-        
+
     def process_newcommand_func(self, node):
         command_name = node.macroname
         command_name, numargs, default_fpar, command_str = self.newcommand_para_dict[command_name]
@@ -204,33 +200,45 @@ class Node2latex():
 
 if __name__ == '__main__':
         
-    file_path = "./example/a.tex"
+    dir_path = "/fs-computility/llm/shared/feizhaoye/datasets/origin_data/arxiv/test-2023-05-30"
     import os
     import json
     import logging
     logger = logging.getLogger("pylatexenc")
     # logger.setLevel(logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG)
+    all_data = []
 
+    for i,j,k in os.walk(dir_path):
+        if j != []:continue
+        for file_name in k:
+            file_path = os.path.join(i, file_name)
+            if file_path.endswith(".json"):
+                with open(file_path, "r") as fp:
+                    all_data.append(json.loads(fp.read()))
 
-    with open(file_path, "r") as fp:
-        latex_data = fp.read()
+    for i in range(1):
+        print("="*10)
+        w = LatexWalker(all_data[i]['content'])   
+        parser = latexnodes_parsers.LatexGeneralNodesParser()
+
+        res = w.parse_content(latexnodes_parsers.LatexGeneralNodesParser())
+
+        all_newcommand = [parse_newcommand(newcommand) for newcommand in find_all_target(res[0], "newcommand")]
+        print(all_newcommand)
+        new_db = get_new_context_db(all_newcommand)
+        new_w = LatexWalker(all_data[i]['content'], latex_context=new_db)
+        nodelist, pos, length = new_w.get_latex_nodes()
         
-    print("="*10)
-    w = LatexWalker(latex_data)   
-    parser = latexnodes_parsers.LatexGeneralNodesParser()
-
-    res = w.parse_content(latexnodes_parsers.LatexGeneralNodesParser())
-
-    all_newcommand = [parse_newcommand(newcommand) for newcommand in find_all_target(res[0], "newcommand")]
-    print(all_newcommand)
-    new_db = get_new_context_db(all_newcommand)
-    new_w = LatexWalker(latex_data, latex_context=new_db)
-    nodelist, pos, length = new_w.get_latex_nodes()
-    
-    nodelist = find_all_target(nodelist, "document")
-    print(len(nodelist))
-    with open("./example/b.tex", "w") as fp:
-        fp.write(Node2latex(all_newcommand).nodelist_to_latex(nodelist))
-
+        nodelist = find_all_target(nodelist, "document")
+        print(len(nodelist))
+        reconstruct_latex = Node2latex(all_newcommand).nodelist_to_latex(nodelist)
+        
+        w = LatexWalker(reconstruct_latex)   
+        parser = latexnodes_parsers.LatexGeneralNodesParser()
+        nodelist, pos, length = w.get_latex_nodes()
+        all_figure = find_all_target(nodelist, "figure")
+        for i in all_figure:
+            print(i.latex_verbatim())
+            print(i)
     
