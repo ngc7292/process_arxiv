@@ -1,7 +1,8 @@
+from ast import arg
+from fileinput import filename
 import sys
 import os
 file_path = os.path.dirname(__file__)
-print(file_path)
 sys.path.append(os.path.join(file_path, "utils"))
 
 import pylatexenc
@@ -15,9 +16,45 @@ from pylatexenc import _util,macrospec,latexwalker
 default_node_type_dict = {
     "document": [latexnodes_nodes.LatexEnvironmentNode, "document", "environmentname"],
     "figure": [latexnodes_nodes.LatexEnvironmentNode, "figure", "environmentname"],
+    "figure*": [latexnodes_nodes.LatexEnvironmentNode, "figure*", "environmentname"],
     "newcommand": [latexnodes_nodes.LatexMacroNode, "newcommand", "macroname"],
-    "table": [latexnodes_nodes.LatexEnvironmentNode, "table", "environmentname"]
+    "table": [latexnodes_nodes.LatexEnvironmentNode, "table", "environmentname"],
+    "subfigure": [latexnodes_nodes.LatexEnvironmentNode, "subfigure", "environmentname"],
+    "subtable": [latexnodes_nodes.LatexEnvironmentNode, "subtable", "environmentname"],
+    
+    "label": [latexnodes_nodes.LatexMacroNode, "label", "macroname"],
+    "caption": [latexnodes_nodes.LatexMacroNode, "caption", "macroname"],
 }
+
+default_multinode_type_dict = {
+    "_realfigure": [
+        [latexnodes_nodes.LatexMacroNode, "includegraphics", "macroname"], 
+        [latexnodes_nodes.LatexMacroNode, "epsfig", "macroname"], 
+    ],
+}
+
+def rfind_multi_all_target(nodelist, target):
+    targetnode_list = []
+    
+    assert target in default_multinode_type_dict.keys(), NotImplementedError
+
+    attr_list = default_multinode_type_dict[target]
+    for node in nodelist:
+        try:
+            for node_type, target_name, attr_name in attr_list:
+                if isinstance(node, node_type) and getattr(node, attr_name) == target_name:
+                    targetnode_list.append(node)
+                    break
+            if isinstance(node, latexnodes_nodes.LatexEnvironmentNode) and getattr(node, "environmentname") not in ["subfigure", "subtable"]: # get subfigure or subtable exit
+                targetnode_list.extend(rfind_multi_all_target(node.nodelist, target))
+            elif isinstance(node, latexnodes_nodes.LatexGroupNode):
+                targetnode_list.extend(rfind_multi_all_target(node.nodelist, target))
+        except Exception as e:
+            print(node)
+            print(e)
+            print(target)
+            raise e
+    return targetnode_list
 
 def find_all_target(nodelist, target, node_type = None, attr_name=None):
     targetnode_list = []
@@ -31,8 +68,26 @@ def find_all_target(nodelist, target, node_type = None, attr_name=None):
         try:
             if isinstance(node, node_type) and getattr(node, attr_name) == target:
                 targetnode_list.append(node)
+        except Exception as e:
+            print(node)
+            print(e)
+            raise e
+    return targetnode_list
+
+def rfind_all_target(nodelist, target, node_type = None, attr_name=None):
+    targetnode_list = []
+    
+    if node_type is None or attr_name is None:
+        if target not in default_node_type_dict.keys():
+            raise NotImplementedError("must give `target`, `node_type` and `attr_name`")
+        node_type, target, attr_name = default_node_type_dict[target]
+    
+    for node in nodelist:
+        try:
+            if isinstance(node, node_type) and getattr(node, attr_name) == target:
+                targetnode_list.append(node)
             elif hasattr(node, "nodelist"):
-                targetnode_list.extend(find_all_target(node.nodelist, target, node_type=node_type, attr_name=attr_name))
+                targetnode_list.extend(rfind_all_target(node.nodelist, target, node_type=node_type, attr_name=attr_name))
         except Exception as e:
             print(node)
             print(e)
@@ -200,37 +255,122 @@ class Node2latex():
             latex += "<[UNKNOWN LATEX NODE: \'%s\']>"%(n.nodeType().__name__)
 
         return latex
+    
+    
 
-
-if __name__ == '__main__':
+def extract_figure_information_from_envnode(node: latexnodes_nodes.LatexEnvironmentNode):
+    assert node.environmentname in ["figure", "figure*", "subfigure"]
+    all_file_path_nodes = rfind_multi_all_target(node.nodelist, "_realfigure")
+    label_nodes = find_all_target(node.nodelist, "label")
+    caption_nodes = find_all_target(node.nodelist, "caption")
+    
+    file_paths = []
+    if all_file_path_nodes != []:
         
-    file_path = "./example/a.tex"
-    import os
-    import json
-    import logging
-    logger = logging.getLogger("pylatexenc")
-    # logger.setLevel(logging.DEBUG)
-    # logging.basicConfig(level=logging.DEBUG)
+        for file_path_node in all_file_path_nodes:
+            if file_path_node.macroname == "includegraphics":
+                argn = file_path_node.nodeargd.argnlist[1]
+                
+                file_path = strip_single(argn.latex_verbatim(), argn.delimiters)
+                file_paths.append(file_path)
+            elif file_path_node.macroname == 'epsfig':
+                argn = file_path_node.nodeargd.argnlist[1]
+                file_path = strip_single(argn.latex_verbatim(), argn.delimiters)
+                real_path = ""
+                if "," in file_path and file_path_node.macroname == 'epsfig':
+                    for s in file_path.split(","):
+                        key, value = s.split("=")
+                        if key == "file":
+                            real_path = value
+                if real_path == "":
+                    print(file_path_node)
+                    raise NotImplementedError
+                file_paths.append(real_path)
+    
+    labels = []
+    if label_nodes != []:
+        for label_node in label_nodes:
+            for argn in label_node.nodeargd.argnlist:
+                if argn is None: continue
+                label = argn.latex_verbatim() # not think multi label
+                labels.append(strip_single(label, argn.delimiters))
+                break
+            
+    captions = [] # only one caption
+    if caption_nodes != []:
+        caption_node = caption_nodes[0]
 
+        for argn in caption_node.nodeargd.argnlist:
+            if argn is None: continue
+            caption = argn.latex_verbatim() # not think multi label
+            captions.append(strip_single(caption, argn.delimiters))
+            break
+            
+    return {
+        "file_paths": file_paths,
+        "labels": labels,
+        "caption": captions[0]
+    }
+    
+def get_all_information_from_figurenode(node: latexnodes_nodes.LatexEnvironmentNode):
+    """
+    1. find subfigure
+    2. extract figure information
+    
+    convert node(figure, table, etc.) to list:
+    {
+        labels: xxx,
+        caption: xxx,
+        origin_latex: xxx,
+        figures:[{
+            file_paths: xxx,
+            labels: xxx
+            caption: xxx
+            }]
+    }
+    
+    maybe:
+    
+    label 1 -> figure 1, figure 2 (figure's label)
+    label 2 -> figure 1, figure 2 (figure's label)
+    label 3 -> figure 1 (subfigure's label)
+    
+    """
+    subsetnode_list = [node] # may be not subset
+    subsetnode_list.extend(rfind_all_target(node.nodelist, "subfigure"))
+    
+    res = extract_figure_information_from_envnode(node)
+    res["origin_latex"] = node.latex_verbatim()
+    res['figures'] = []
+    
+    for subsetnode in subsetnode_list:
+        res['figures'].append(extract_figure_information_from_envnode(subsetnode))
+    return res
 
-    with open(file_path, "r") as fp:
-        latex_data = fp.read()
-        
-    print("="*10)
+def get_all_figure(latex_data):
+    all_figure_list = []
     w = LatexWalker(latex_data)   
     parser = latexnodes_parsers.LatexGeneralNodesParser()
+    res = w.parse_content(parser)
 
-    res = w.parse_content(latexnodes_parsers.LatexGeneralNodesParser())
+    all_target = rfind_all_target(res[0], "figure")
+    all_target.extend(rfind_all_target(res[0], "figure*"))
+    for i in all_target:
+        a = get_all_information_from_figurenode(i)
+        all_figure_list.append(a)
+    return all_figure_list
 
-    all_newcommand = [parse_newcommand(newcommand) for newcommand in find_all_target(res[0], "newcommand")]
-    print(all_newcommand)
+def reconstruct_latex(origin_latex):
+    w = LatexWalker(origin_latex)   
+    parser = latexnodes_parsers.LatexGeneralNodesParser()
+
+    res = w.parse_content(parser)
+
+    all_newcommand = [parse_newcommand(newcommand) for newcommand in rfind_all_target(res[0], "newcommand")]
     new_db = get_new_context_db(all_newcommand)
-    new_w = LatexWalker(latex_data, latex_context=new_db)
+    new_w = LatexWalker(origin_latex, latex_context=new_db)
     nodelist, pos, length = new_w.get_latex_nodes()
-    
-    nodelist = find_all_target(nodelist, "document")
-    print(len(nodelist))
-    with open("./example/b.tex", "w") as fp:
-        fp.write(Node2latex(all_newcommand).nodelist_to_latex(nodelist))
 
-    
+    nodelist = rfind_all_target(nodelist, "document")
+
+    return Node2latex(all_newcommand).nodelist_to_latex(nodelist)

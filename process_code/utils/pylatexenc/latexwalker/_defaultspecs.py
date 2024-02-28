@@ -100,6 +100,8 @@ specs = [
             std_macro('include', False, 1),
 
             std_macro('includegraphics', True, 1),
+            std_macro('epsfig', True, 1),
+            std_macro('caption', True, 1),
 
             std_macro('chapter', '*[{'),
             std_macro('section', '*[{'),
@@ -248,8 +250,12 @@ specs = [
 
             std_environment('figure', '['),
             std_environment('figure*', '['),
+            std_environment('subfigure', '[{'),
+            std_environment('subfigure*', '[{'),
             std_environment('table', '['),
             std_environment('table*', '['),
+            std_environment('subtable', '[{'),
+            std_environment('subtable*', '[{'),
 
             std_environment('abstract', None),
             

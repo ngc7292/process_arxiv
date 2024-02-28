@@ -1,22 +1,3 @@
-# Process arxiv
-
-In this project, we will parse arxiv latex file, restruct it(recomplie \newcommand and \input and so on) and extract figure/table or other information tag for training.
-
-we use pylatexenc to parse the latex file.
-
-### TODO
-
-- [x] Parse latex using pylatexenc
-- [x] reconstruct latex file
-- [x] extract target function
-- [x] Parse figure or other information 
-- [ ] extract information
-- [ ] format to internlmxcomposer training format.
-
-### Usage
-
-
-```
 from gettext import find
 import sys
 import os
@@ -45,4 +26,3 @@ reconstruct_latex_data = reconstruct_latex(latex_data)
 all_figure = get_all_figure(reconstruct_latex_data)
 
 print(all_figure)
-```

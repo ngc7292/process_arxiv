@@ -1,0 +1,75 @@
+[
+    {
+        "file_paths": [],
+        "labels": [
+            "fig:radarchart"
+        ],
+        "caption": "Radar chart of InternLM2-boost performances.",
+        "origin_latex": "\\begin{figure}[!t]\n  \\centering\n  \\begin{subfigure}[b]{0.4\\textwidth}\n  \\includegraphics[width=\\textwidth]{images/results/internlmboost_7b_radar.pdf}\n  \\caption{The performance of 7B}\\label{fig:radarchart_7b}\n  \\end{subfigure}\n  \\begin{subfigure}[b]{0.4\\textwidth}\n  \\includegraphics[width=\\textwidth]{images/results/internlmboost_20b_radar.pdf}\n  \\caption{The performance of 20B}\\label{fig:radarchart_20b}\n  \\end{subfigure}\n  \\caption{Radar chart of InternLM2-boost performances.}\n  \\label{fig:radarchart}\n\\end{figure}",
+        "figures": [
+            {
+                "file_paths": [],
+                "labels": [
+                    "fig:radarchart"
+                ],
+                "caption": "Radar chart of InternLM2-boost performances."
+            },
+            {
+                "file_paths": [],
+                "labels": [
+                    "fig:radarchart_7b"
+                ],
+                "caption": "The performance of 7B"
+            },
+            {
+                "file_paths": [],
+                "labels": [
+                    "fig:radarchart_20b"
+                ],
+                "caption": "The performance of 20B"
+            }
+        ]
+    },
+    {
+        "file_paths": [
+            "scalar-1loop.eps"
+        ],
+        "labels": [
+            "figure 2"
+        ],
+        "caption": "\\small\nThe one-loop diagram (vacuum bubble) contributing to the scalar effective\ntheory~(\\ref{effective action:1 loop}) in a curved background.\n",
+        "origin_latex": "\\begin{figure}[tbp]\n\\centerline{\\hspace{.in}\n\\epsfig{file=scalar-1loop.eps, width=1.5in}\n}\n\\refstepcounter{fig} \\label{figure 2} \n\\vskip -0.1in\n\\caption{\\small\nThe one-loop diagram (vacuum bubble) contributing to the scalar effective\ntheory~(\\ref{effective action:1 loop}) in a curved background.\n}\n\\end{figure}",
+        "figures": [
+            {
+                "file_paths": [
+                    "scalar-1loop.eps"
+                ],
+                "labels": [
+                    "figure 2"
+                ],
+                "caption": "\\small\nThe one-loop diagram (vacuum bubble) contributing to the scalar effective\ntheory~(\\ref{effective action:1 loop}) in a curved background.\n"
+            }
+        ]
+    },
+    {
+        "file_paths": [
+            "INF-deSitter.eps"
+        ],
+        "labels": [
+            "figure 1"
+        ],
+        "caption": "fig0",
+        "origin_latex": "\\begin{figure*}[tbp]\n\\vskip -0.1in\n\\begin{center}\n\\epsfig{file=INF-deSitter.eps,width=1.8in}\n\\end{center}\n\\refstepcounter{fig} \\label{figure 1} \n\\vskip -0.3in\n\\caption[fig0]{\n\\small\nThe embedding of de Sitter space into a five dimensional flat space-time.\nThe vertical line corresponds to the time coordinate, $X_0=T$,\nand the radial coordinate $R=\\sqrt{X_1^2+X_2^2+X_3^2+X_4^2}$.\n At each point $(T,R)$ there is a unit 3-sphere $S^3$, which is for\nthe sake of clarity represented by a circle $S^1$ erected at each\npoint $(T,R)$. The Hubble radius $R_H=1/H$\nis the coordinate distance $R$ of the hyperboloid from the origin at $T=0$.\n}\n\\end{figure*}",
+        "figures": [
+            {
+                "file_paths": [
+                    "INF-deSitter.eps"
+                ],
+                "labels": [
+                    "figure 1"
+                ],
+                "caption": "fig0"
+            }
+        ]
+    }
+]
