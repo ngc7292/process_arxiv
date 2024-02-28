@@ -1,7 +1,7 @@
-from curses.ascii import isdigit
 import sys
-
-sys.path.append("/fs-computility/llm/shared/feizhaoye/code/utils/pylatexenc")
+import os
+file_path = os.path.abspath(__file__)
+sys.path.append(os.path.join(file_path, "utils"))
 
 import pylatexenc
 from pylatexenc.latexwalker import LatexWalker
